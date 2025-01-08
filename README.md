@@ -1,128 +1,143 @@
-Учебный проект YandexLMS "Программирование на Go | 24".
-Спринт 1. Финальная задача 1.13.
-
-ОБЩАЯ ИНФОРМАЦИЯ
-
+#### Учебный проект YandexLMS "Программирование на Go | 24". Спринт 1. Финальная задача 1.13.
+---
+### ОБЩАЯ ИНФОРМАЦИЯ
 Веб-сервис позволяет пользователю отправляет арифметическое выражение по HTTP (REST API) и получает в ответ результат его вычисления.
-Поддерживает 4 основные арифметические операции + - * /. Выражение не должно содержать знак =.
-
-Ожидает POST запрос на эндпоинт /api/v1/calculate
+Поддерживает 4 основные арифметические операции ```+``` ```-``` ```*``` ```/```, унарный ```-``` и скобки  ```(``` ```)``` любой глубины вложенности. Выражение не должно содержать знак ```=```. Все пробелы игнорируются
+Ожидает POST запрос на эндпоинт ```/api/v1/calculate ```.
 Body запроса должно содержать JSON следующего вида:
-{
-    "expression": "Выражение"  
-}
+```
+{"expression": "Выражение"}
+```
+Выражение может содержать следующие символы ```()+-*/0123456789``` и должно быть корректным математическим выражением.
+В случае успешного вычисления выражения сервис возвращает код ```200```, в качестве результата в body возвращает JSON следующего вида:
+```json
+{"result": "Результат"}
+```
+В случае если входные данные не соответствуют требованиям, сервис возвращает код ```422```, а в body JSON следующего вида:
+```json
+{"error": "Expression is not valid"}
+```
 
-Выражение может содержать следующие символы ()+-*/0123456789 и должно быть корректным математическим выражением.
+Если в работе сервиса произошла какая-то ошибка, код ```500``` и в body JSON следующего вида:
+```json
+{"error": "Internal server error"}
+```
+---
+### ЗАПУСК ПРИЛОЖЕНИЯ
+Сервис обрабатывает запросы, поступающие на порт 8080.
 
-В случае успешного вычисления выражения сервис возвращает код 200, в качестве результата в body возвращает JSON следующего вида:
-{
-    "result": "Результат"
-}
-
-В случае если входные данные не соответствуют требованиям, сервис возвращает код 422, а в body JSON следующего вида:
-{
-    "error": "Expression is not valid"
-}
-
-Если в работе сервиса произошла какая-то ошибка, код 500 и в body JSON следующего вида:
-{
-    "error": "Internal server error"
-}
-
-ЗАПУСК СЕРВИСА.
-
-Сервис обрабатывает запросы, поступающие на порт 80.
-
-Для его запуска в ОС Windows необходимо :
-1. нажмите Win+R, либо перейдите в меню «Пуск» и выбрать пункт «Выполнить».
-2. В появившемся окне набрать cmd и нажать ОК. 
-3. В открывшемся окне (это и есть командная строка Windows) перейти в каталог проекта выполнив команду
-   cd полныйПутьККакталогуПроекта
-   например cd d:\Projects\yandexLMSGo. Если при этом надо будет сменить диск, предварительно введите название этого диска с двоеточием и нажмите Enter.
-4. Для запуска сервиса введите в командной строке 
-   go run main.go
+Для его запуска в ОС Windows необходимо:
+1. Склонируйте этот репозитарий к себе на компьютер например в каталог d:\Projects\yandexLMSGo. 
+2. Перейдите в каталог п.1.
+3. Для запуска сервиса введите в командной строке 
+```sh
+   go run cmd\main.go
+```
    и нажмие Enter.
+   По умолчанию сервер запускается на порту 8080. Если нужно изменить порт, установите необходимое значение пересенной окружения 
+```bash
+   set PORT=3000
+```
+---
+### ЗАПУСК ЮНИТ-ТЕСТОВ
+* алгоритма калькулятора:
+```bash
+go test .\pkg\calc\
+```
+* Rest API сервиса:
+```bash
+go test .\internal\app\
+```
+---
+### ПРОВЕРКА РАБОТЫ СЕРВИСА С ПОМОЩЬЮ CURL 
+1. Простое выражение ```2+2*2```. Наберите в командной строке
+```sh
+curl -X POST -H "Content-Type: application/json" -d "{\"expression\": \"2+2*2\"}" localhost:8080/api/v1/calculate
+```
+Ответ: ```{"result":"6"}```
 
+2. Простое выражение ```-2+2*2``` (первый унарный минус). Наберите в командной строке
+```sh
+curl -X POST -H "Content-Type: application/json" -d "{\"expression\": \"-2+2*2\"}" localhost:8080/api/v1/calculate
+```
+Ответ: ```{"result":"2"}```
 
-Проверка работы сервиса c помощью curl (примеры вызовов REST API с результатами):
+3. Простое выражение ```2+2*(-2)``` (унарный минус в скобках). Наберите в командной строке
+```sh
+curl -X POST -H "Content-Type: application/json" -d "{\"expression\": \"2+2*(-2)\"}" localhost:8080/api/v1/calculate
+```
+Ответ: ```{"result":"-2"}```
 
-1. Простое выражение 2+2*2. Наберите в командной строке
-curl -X POST -H "Content-Type: application/json" -d "{\"expression\": \"2+2*2\"}" localhost:80/api/v1/calculate
-Результат:
-{"result":"6"}
+4. Простое выражение со скобками ```-(2+2)*2``` (унарный минус перед скобками). Наберите в командной строке
+```sh
+curl -X POST -H "Content-Type: application/json" -d "{\"expression\": \"(2+2)*2\"}" localhost:8080/api/v1/calculate
+```
+Ответ: ```{"result":"-8"}```
 
-2. Простое выражение -2+2*2 (первый унарный минус). Наберите в командной строке
-curl -X POST -H "Content-Type: application/json" -d "{\"expression\": \"-2+2*2\"}" localhost:80/api/v1/calculate
-Результат:
-{"result":"2"}
+5. Сложное выражение ```-3*(12/4+(-2+8/2))+(7-20/5*(9-2*2*2+1))*(-10)```. Наберите в командной строке
+```sh
+curl -X POST -H "Content-Type: application/json" -d "{\"expression\": \"-3*(12/4+(-2+8/2))+(7-20/5*(9-2*2*2+1))*(-10)\"}" localhost:8080/api/v1/calculate
+```
+Ответ: ```{"result":"-5"}```
 
-3. Простое выражение 2+2*(-2) (унарный минус в скобках). Наберите в командной строке
-curl -X POST -H "Content-Type: application/json" -d "{\"expression\": \"2+2*(-2)\"}" localhost:80/api/v1/calculate
-Результат:
-{"result":"-2"}
+6. Сложное выражение ```-(3*(12/4+(-2+8/2))+(7-20/5*(9-2*2*2+1))*(-10))```. Наберите в командной строке
+```sh
+curl -X POST -H "Content-Type: application/json" -d "{\"expression\": \"-(3*(12/4+(-2+8/2))+(7-20/5*(9-2*2*2+1))*(-10))\"}" localhost:8080/api/v1/calculate
+```
+Ответ: ```{"result":"-25"}```
 
-4. Простое выражение со скобками (2+2)*2 (унарный минус в скобках). Наберите в командной строке
-curl -X POST -H "Content-Type: application/json" -d "{\"expression\": \"(2+2)*2\"}" localhost:80/api/v1/calculate
-Результат:
-{"result":"8"}
+7. Сложное выражение с пробелами ```-(3*( 12/ 4+(-2 + 8/2 ) ) +(7-20/5*(9-2* 2*2+1))*(  -10))```. Наберите в командной строке
+```sh
+curl -X POST -H "Content-Type: application/json" -d "{\"expression\": \"-(3*( 12/ 4+(-2 + 8/2 ) ) +(7-20/5*(9-2* 2*2+1))*(  -10))\"}" localhost:8080/api/v1/calculate
+```
+Ответ: ```{"result":"-25"}```
 
-5. Сложное выражение -3*(12/4+(-2+8/2))+(7-20/5*(9-2*2*2+1))*(-10). Наберите в командной строке
-curl -X POST -H "Content-Type: application/json" -d "{\"expression\": \"-3*(12/4+(-2+8/2))+(7-20/5*(9-2*2*2+1))*(-10)\"}" localhost:80/api/v1/calculate
-Результат:
-{"result":"-5"}
+8. Ошибка в выражении (непарная скобка) ```-(3*(12/4+(-2+8/2))+(7-20/5*(9-2*2*2+1))*(-10)```. Наберите в командной строке
+```sh
+curl -X POST -H "Content-Type: application/json" -d "{\"expression\": \"-3*(12/4+(-2+8/2))+(7-20/5*(9-2*2*2+1))*(-10)\"}" localhost:8080/api/v1/calculate
+```
+Ответ: ```{"error": "Expression is not valid"}```
 
-6. Сложное выражение -(3*(12/4+(-2+8/2))+(7-20/5*(9-2*2*2+1))*(-10)). Наберите в командной строке
-curl -X POST -H "Content-Type: application/json" -d "{\"expression\": \"-(3*(12/4+(-2+8/2))+(7-20/5*(9-2*2*2+1))*(-10))\"}" localhost:80/api/v1/calculate
-{"result":"-25"}
-
-7. Сложное выражение с пробелами -(3*( 12/ 4+(-2 + 8/2 ) ) +(7-20/5*(9-2* 2*2+1))*(  -10)). Наберите в командной строке
-curl -X POST -H "Content-Type: application/json" -d "{\"expression\": \"-(3*( 12/ 4+(-2 + 8/2 ) ) +(7-20/5*(9-2* 2*2+1))*(  -10))\"}" localhost:80/api/v1/calculate
-{"result":"-25"}
-
-8. Ошибка в выражении (непарная скобка) -(3*(12/4+(-2+8/2))+(7-20/5*(9-2*2*2+1))*(-10). Наберите в командной строке
-curl -X POST -H "Content-Type: application/json" -d "{\"expression\": \"-3*(12/4+(-2+8/2))+(7-20/5*(9-2*2*2+1))*(-10)\"}" localhost:80/api/v1/calculate
-Результат:
-{
-    "error": "Expression is not valid"
-}
-
-9. Ошибка в выражении (недопустимый символ =) -(3*(12/4+(-2+8/2))+(7-20/5*(9-2*2*2+1))*(-10))=. Наберите в командной строке
-curl -X POST -H "Content-Type: application/json" -d "{\"expression\": \"-3*(12/4+(-2+8/2))+(7-20/5*(9-2*2*2+1))*(-10))=\"}" localhost:80/api/v1/calculate
-Результат:
-{
-    "error": "Expression is not valid"
-}
+9. Ошибка в выражении (недопустимый символ ```=```) ```-(3*(12/4+(-2+8/2))+(7-20/5*(9-2*2*2+1))*(-10))=```. Наберите в командной строке
+```sh
+curl -X POST -H "Content-Type: application/json" -d "{\"expression\": \"-3*(12/4+(-2+8/2))+(7-20/5*(9-2*2*2+1))*(-10))=\"}" localhost:8080/api/v1/calculate
+```
+Ответ: ```{"error": "Expression is not valid"}```
 
 10. Ошибка в выражении (недопустимый символы) -(3*(12/4+(-A+8/2))+(7-20/5*(9-2*2*2+b))*(-10))=. Наберите в командной строке
-curl -X POST -H "Content-Type: application/json" -d "{\"expression\": \"-3*(12/4+(-A+8/2))+(7-20/5*(9-2*2*2+b))*(-10))\"}" localhost:80/api/v1/calculate
-Результат:
-{
-    "error": "Expression is not valid"
-}
+```sh
+curl -X POST -H "Content-Type: application/json" -d "{\"expression\": \"-3*(12/4+(-A+8/2))+(7-20/5*(9-2*2*2+b))*(-10))\"}" localhost:8080/api/v1/calculate
+```
+Ответ: ```{"error": "Expression is not valid"}```
 
 11. Ошибка в хосте. Наберите в командной строке
-curl -X POST -H "Content-Type: application/json" -d "{\"expression\": \"2+2*2\"}" localhostttt:80/api/v1/calculate
-Результат:
-curl: (6) Could not resolve host: localhostttt
+```sh
+curl -X POST -H "Content-Type: application/json" -d "{\"expression\": \"2+2*2\"}" localhostttt:8080/api/v1/calculate
+```
+Ответ: ```curl: (6) Could not resolve host: localhostttt```
 
 12. Ошибка в номере порта. Наберите в командной строке
-curl -X POST -H "Content-Type: application/json" -d "{\"expression\": \"2+2*2\"}" localhost:801/api/v1/calculate
-Результат:
-curl: (7) Failed to connect to localhost port 801 after 2255 ms: Could not connect to server
+```sh
+curl -X POST -H "Content-Type: application/json" -d "{\"expression\": \"2+2*2\"}" localhost:8081/api/v1/calculate
+```
+Ответ: ```curl: (7) Failed to connect to localhost port 8081 after 2255 ms: Could not connect to server```
 
 13. Ошибка в пути. Наберите в командной строке
-curl -X POST -H "Content-Type: application/json" -d "{\"expression\": \"2+2*2\"}" localhost:80/api/v2/recalculate
-Результат:
-404 page not found
+```sh
+curl -X POST -H "Content-Type: application/json" -d "{\"expression\": \"2+2*2\"}" localhost:8080/api/v2/recalculate
+```
+Ответ: ```404 page not found```
 
 14. Ошибка в типе метода запроса. Наберите в командной строке
-curl -X GET -H "Content-Type: application/json" -d "{\"expression\": \"2+2*2\"}" localhost:80/api/v1/calculate
-Результат:
-404 page not found
+```sh
+curl -X GET -H "Content-Type: application/json" -d "{\"expression\": \"2+2*2\"}" localhost:8080/api/v1/calculate
+```
+Ответ: ```404 page not found```
 
 15. Ошибка в содержимом body (не хватает двойных первых кавычек) - JSON невозможно корректго распарсить. Наберите в командной строке
-curl -X POST -H "Content-Type: application/json" -d "{expression\": \"2+2*2\"}" localhost:80/api/v1/calculate
-Результат:
-{
-    "error": "Internal server error"
-}
+```sh
+curl -X POST -H "Content-Type: application/json" -d "{expression\": \"2+2*2\"}" localhost:8080/api/v1/calculate
+```
+Ответ: ```{"error": "Internal server error"}```
+
+---
